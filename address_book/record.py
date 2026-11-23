@@ -15,8 +15,10 @@ class Record:
     def __str__(self):
         phones = self.get_phones()
         birthday = str(self.birthday) if self.birthday is not None else "no data"
+        name_column_lenght = 17
 
-        return f"{Fore.BLUE}{str(self.name)}:{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
+        name_column = str(self.name)[: name_column_lenght - 1] + ":"
+        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
 
     def get_phones(self) -> str:
         return ", ".join([str(phone) for phone in self.phones])
