@@ -1,3 +1,18 @@
+1. install venv and requirements:
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+
+2. python -m main
+
+3. git checkout develop
+   git fetch
+   git pull
+4. git checkout your-branch-name
+5. pull request into develop!
+
+
+
 Персональний помічник
 "Нижче ви знайдете опис та вимоги для роботи над проєктом створення Персонального помічника.
 Мета проєкту: Створити систему для зберігання та взаємодії з записами адресної книги та нотатками. "
