@@ -1,7 +1,7 @@
 import pickle
 
-from address_book import AddressBook
-from phone_bot import PhoneBot
+from address_book.address_book import AddressBook
+from phone_bot.phone_bot import PhoneBot
 
 
 def main():

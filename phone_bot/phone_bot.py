@@ -3,13 +3,9 @@ from typing import Callable
 
 from colorama import Fore
 
-from address_book import (
-    AddressBook,
-    DateInputError,
-    NoContactError,
-    PhoneInputError,
-    Record,
-)
+from address_book.address_book import AddressBook
+from address_book.exceptions import DateInputError, NoContactError, PhoneInputError
+from address_book.record import Record
 
 
 def input_error(func: Callable):
@@ -52,6 +48,7 @@ class ContactNotExist(Exception):
 
 class PhoneBot:
     def __init__(self, book: AddressBook = {}):
+        # Add new command here (command name: executed function)
         self.commands = {
             "hello": self._hello,
             "add": self._add_contact,

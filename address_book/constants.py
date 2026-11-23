@@ -1,0 +1,3 @@
+DATE_FORMAT = "%d.%m.%Y"
+WEEKEND_DAYS = (5, 6)
+DAYS_IN_WEEK = 7
