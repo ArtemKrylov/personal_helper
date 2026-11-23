@@ -1,15 +1,16 @@
-1. install venv and requirements:
+1. git checkout develop
+   git fetch
+   git pull origin develop
+2. Create your feature branch: 
+   git checkout -b feature/your-feature-name
+3. install venv and requirements (if not installed):
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-
-2. python -m main
-
-3. git checkout develop
-   git fetch
-   git pull
-4. git checkout your-branch-name
-5. pull request into develop!
+4. Start bot: python -m main
+5. Make feature and create pull request into develop:
+git add .
+git commit -m "feat/review/bugfix: description"
+git push -u origin feature/your-feature-name  / git push
 
 
 
