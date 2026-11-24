@@ -4,7 +4,12 @@ from typing import Callable
 from colorama import Fore
 
 from address_book.address_book import AddressBook
-from address_book.exceptions import DateInputError, NoContactError, PhoneInputError
+from address_book.exceptions import (
+    DateInputError,
+    NameInputError,
+    NoContactError,
+    PhoneInputError,
+)
 from address_book.record import Record
 from phone_bot.exceptions import (
     BreakError,
@@ -27,7 +32,7 @@ def input_error(func: Callable):
             return "Give me name and phone please."
         except IndexError:
             return "Enter the argument for the command"
-        except (PhoneInputError, NoContactError, DateInputError) as e:
+        except (PhoneInputError, NoContactError, DateInputError, NameInputError) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
             raise
@@ -38,7 +43,7 @@ def input_error(func: Callable):
 
 
 class PhoneBot:
-    def __init__(self, book: AddressBook = {}):
+    def __init__(self, book: AddressBook | None = None):
         # Add new command here (command name: executed function)
         self.commands = {
             "hello": self.__hello,
@@ -50,12 +55,14 @@ class PhoneBot:
             "all": self.__show_all_contacts,
             "add-birthday": self.__add_birthday,
             "show-birthday": self.__show_birthday,
+            "change-birthday": self.__change_birthday,
+            "delete-birthday": self.__delete_birthday,
             "birthdays": self.__show_birthdays,
             "help": self.__show_commands,
             "close": self.__close,
             "exit": self.__close,
         }
-        self.book = book
+        self.book = book if book is not None else AddressBook()
 
     def start_bot(self):
         print(f"""\n{"Welcome to the assistant bot!":*^100}
@@ -75,11 +82,13 @@ class PhoneBot:
 
             try:
                 match = suggest_command(command, self.commands)
-                message = self.commands[match](args)
+                handler = self.commands.get(match) if match is not None else None
+                if handler is None:
+                    print("Unknown command")
+                    continue
+                message = handler(args)
                 if message:
                     print(message)
-            except KeyError:
-                print("Unknown command")
             except BreakError:
                 break
             except ContinueError:
@@ -201,6 +210,22 @@ class PhoneBot:
             if birthday
             else "No birthday found"
         )
+
+    @input_error
+    def __change_birthday(self, args) -> str:
+        name, birthday, *_ = args
+        record = self.book.find(name)
+        record.change_birthday(birthday)
+
+        return f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+
+    @input_error
+    def __delete_birthday(self, args) -> str:
+        name = args[0]
+        record = self.book.find(name)
+        record.del_birthday()
+
+        return f"{Fore.BLUE}{name}: {Fore.GREEN}{"Birthday deleted"}{Fore.RESET}"
 
     @input_error
     def __show_birthdays(self, _) -> str:
