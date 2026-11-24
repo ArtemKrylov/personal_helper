@@ -45,6 +45,7 @@ PHRASE_TO_COMMAND = {
 
 def suggest_command(user_input: str) -> str | None:
     text = " ".join(user_input.casefold().split())
+    # returns list of the best "good enough" matches
     matches = get_close_matches(text, PHRASE_TO_COMMAND, n=1, cutoff=0.6)
 
     if matches:
