@@ -246,5 +246,5 @@ class PhoneBot:
 
     @input_error
     def __close(self, _) -> None:
-        print("Good bye!")
+        print("Goodbye!")
         raise BreakError
