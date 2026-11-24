@@ -1,7 +1,7 @@
 from colorama import Fore
 
 from address_book.fields.birthday import Birthday
-from address_book.exceptions import error_handler
+from address_book.exceptions import PhoneInputError, error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
 
@@ -23,7 +23,6 @@ class Record:
     def get_phones(self) -> str:
         return ", ".join([str(phone) for phone in self.phones])
 
-    @error_handler
     def add_phone(self, phone: str) -> None:
 
         (
@@ -33,18 +32,20 @@ class Record:
         )
 
     def remove_phone(self, phone: str) -> None:
-        self.phones = [
-            filtered_phone
-            for filtered_phone in self.phones
-            if filtered_phone.value != phone
-        ]
+        found_phone = self.find_phone(phone)
+        if found_phone is None:
+            raise PhoneInputError(f"Phone number {phone} does not exist")
+        self.phones.remove(found_phone)
 
-    @error_handler
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
-        self.phones = [
-            Phone(new_phone) if phone.value == old_phone else phone
-            for phone in self.phones
-        ]
+        found_phone = self.find_phone(old_phone)
+        if found_phone is None:
+            raise PhoneInputError(f"Phone number {old_phone} does not exist")
+        if old_phone == new_phone:
+            return
+        if self.find_phone(new_phone) is not None:
+            raise PhoneInputError("Phone already exists")
+        self.phones[self.phones.index(found_phone)] = Phone(new_phone)
 
     def find_phone(self, phone: str) -> Phone | None:
         return next((item for item in self.phones if item.value == phone), None)
@@ -54,7 +55,7 @@ class Record:
         self.birthday = Birthday(birthday)
 
     @error_handler
-    def change_birthday(self, birthday: Birthday) -> None:
+    def change_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
     @error_handler
