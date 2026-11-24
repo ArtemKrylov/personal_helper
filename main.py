@@ -3,6 +3,7 @@ import pickle
 
 from address_book import address_book
 from phone_bot import PhoneBot
+from run_with_theme import run_with_theme
 
 
 def main():
@@ -28,4 +29,5 @@ def main():
 
 if __name__ == "__main__":
     print("Hello")
+    # run_with_theme(main)
     main()

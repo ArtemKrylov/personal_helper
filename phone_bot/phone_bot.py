@@ -6,6 +6,7 @@ from colorama import Fore
 from address_book.address_book import AddressBook
 from address_book.exceptions import DateInputError, NoContactError, PhoneInputError
 from address_book.record import Record
+from phone_bot.suggest_command import suggest_command
 
 
 def input_error(func: Callable):
@@ -81,9 +82,10 @@ class PhoneBot:
                 continue
 
             command, *args = self._parse_input(user_input)
+            match = suggest_command(command)
 
             try:
-                message = self.commands[command](args)
+                message = self.commands[match](args)
                 if message:
                     print(message)
             except KeyError:
