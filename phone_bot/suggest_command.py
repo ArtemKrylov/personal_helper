@@ -1,4 +1,5 @@
 from difflib import get_close_matches
+from typing import Callable
 
 PHRASE_TO_COMMAND = {
     "hello": "hello",
@@ -43,15 +44,23 @@ PHRASE_TO_COMMAND = {
 }
 
 
-def suggest_command(user_input: str) -> str | None:
-    text = " ".join(user_input.casefold().split())
+def suggest_command(command: str, commands: dict[str, Callable]) -> str | None:
+
+    text = " ".join(command.casefold().split())
+    if text in commands:
+        return text
+
     # returns list of the best "good enough" matches
     matches = get_close_matches(text, PHRASE_TO_COMMAND, n=1, cutoff=0.6)
 
     if matches:
-        user_input = input(f"Did you mean: {PHRASE_TO_COMMAND[matches[0]]}? Y/N ")
+        try:
+            user_input = input(f"Did you mean: {PHRASE_TO_COMMAND[matches[0]]}? Y/N ")
+        except EOFError:
+            return None
 
-        if user_input.split()[0].strip().lower() != "y":
+        answer = user_input.lower().split(maxsplit=1)
+        if not answer or answer[0] != "y":
             return None
 
         return PHRASE_TO_COMMAND[matches[0]]
