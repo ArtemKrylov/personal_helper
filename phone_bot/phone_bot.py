@@ -6,6 +6,12 @@ from colorama import Fore
 from address_book.address_book import AddressBook
 from address_book.exceptions import DateInputError, NoContactError, PhoneInputError
 from address_book.record import Record
+from phone_bot.exceptions import (
+    BreakError,
+    ContactExist,
+    ContactNotExist,
+    ContinueError,
+)
 from phone_bot.suggest_command import suggest_command
 
 
@@ -29,22 +35,6 @@ def input_error(func: Callable):
             print(f"An error occurred: {e}")
 
     return inner
-
-
-class BreakError(Exception):
-    pass
-
-
-class ContinueError(Exception):
-    pass
-
-
-class ContactExist(Exception):
-    pass
-
-
-class ContactNotExist(Exception):
-    pass
 
 
 class PhoneBot:
@@ -82,9 +72,9 @@ class PhoneBot:
                 continue
 
             command, *args = self._parse_input(user_input)
-            match = suggest_command(command, self.commands)
 
             try:
+                match = suggest_command(command, self.commands)
                 message = self.commands[match](args)
                 if message:
                     print(message)

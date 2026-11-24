@@ -1,6 +1,8 @@
 from difflib import get_close_matches
 from typing import Callable
 
+from phone_bot.exceptions import BreakError
+
 PHRASE_TO_COMMAND = {
     "hello": "hello",
     "add": "add",
@@ -58,6 +60,9 @@ def suggest_command(command: str, commands: dict[str, Callable]) -> str | None:
             user_input = input(f"Did you mean: {PHRASE_TO_COMMAND[matches[0]]}? Y/N ")
         except EOFError:
             return None
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            raise BreakError
 
         answer = user_input.lower().split(maxsplit=1)
         if not answer or answer[0] != "y":
