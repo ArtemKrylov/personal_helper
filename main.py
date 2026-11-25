@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from uuid import uuid4
+import colorama
 
 
 from address_book import AddressBook
@@ -46,6 +46,9 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Hello")
+    colorama.init(autoreset=True)
     # run_with_theme(main)
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(str(e))
