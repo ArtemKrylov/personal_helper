@@ -5,12 +5,17 @@ from address_book.exceptions import PhoneInputError, error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
 
+from utils.colorize import Color, colorize
+
 
 class Record:
     def __init__(self, name: str):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.address = None
+        self.email = None
+        self.notes = []
 
     def __str__(self):
         phones = self.get_phones()
@@ -19,6 +24,27 @@ class Record:
 
         name_column = str(self.name)[: name_column_lenght - 1] + ":"
         return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
+
+    @property
+    def record_table_row(self):
+        name = colorize(str(getattr(self, "name", None)), Color.GREEN)
+        phones = ", ".join(
+            [colorize(str(phone)) for phone in getattr(self, "phones", None) or []]
+        )
+        birthday = colorize(str(getattr(self, "birthday", None)))
+        address = colorize(str(getattr(self, "address", None)))
+        email = colorize(str(getattr(self, "email", None)))
+        notes = ", ".join(
+            [colorize(str(note)) for note in getattr(self, "notes", None) or []]
+        )
+        return [
+            name,
+            phones,
+            birthday,
+            address,
+            email,
+            notes,  
+        ]
 
     def get_phones(self) -> str:
         return ", ".join([str(phone) for phone in self.phones])

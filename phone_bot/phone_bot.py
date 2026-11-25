@@ -2,6 +2,7 @@ from functools import wraps
 from typing import Callable
 
 from colorama import Fore
+from tabulate import tabulate
 
 from address_book.address_book import AddressBook
 from address_book.exceptions import (
@@ -18,6 +19,7 @@ from phone_bot.exceptions import (
     ContinueError,
 )
 from phone_bot.suggest_command import suggest_command
+from utils.colorize import Color, colorize
 
 
 def input_error(func: Callable):
@@ -43,6 +45,8 @@ def input_error(func: Callable):
 
 
 class PhoneBot:
+    headers = ["№", "Name", "Phones", "Birthday", "Address", "Email", "Notes"]
+
     def __init__(self, book: AddressBook | None = None):
         # Add new command here (command name: executed function)
         self.commands = {
@@ -51,7 +55,8 @@ class PhoneBot:
             "add-phone-to-contact": self.__add_contact_phone,
             "change": self.__change_contact,
             "del": self.__delete_contact,
-            "phone": self.__show_contact,
+            "phones": self.__show_contact_phones,
+            "show": self.__show_contact,
             "all": self.__show_all_contacts,
             "add-birthday": self.__add_birthday,
             "show-birthday": self.__show_birthday,
@@ -173,23 +178,45 @@ class PhoneBot:
         self.book.delete(name)
 
         return f"Contact {Fore.RED}{name}{Fore.RESET} deleted."
+    
+    @staticmethod
+    def __form_table(records:list[Record]):
+        table_contacts = [record.record_table_row for record in records]
+        table = tabulate(
+            table_contacts,
+            headers=[colorize(header, Color.MAGENTA) for header in PhoneBot.headers],
+            tablefmt="fancy_grid",
+            showindex=[colorize(str(i), Color.MAGENTA) for i in range(1, len(table_contacts) + 1)],
+            maxcolwidths=15,
+            disable_numparse=True
+        )
+        return table
+        
+    def __show_contact_phones(self, args)->str:
+        name = args[0]
+        record = self.book.find(name)
+        
+        return record.get_phones()
+    
 
     @input_error
     def __show_contact(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
 
-        return str(record)
+        # return str(record)
+        return self.__form_table([record])
 
-    @input_error
+    # @input_error
     def __show_all_contacts(self, _) -> str:
         records = self.book.values()
         if not len(records):
             return "No contacts"
 
-        showing_contacts = "\n".join([str(record) for record in records])
-
-        return f"{"Phonebook:":-^100}\n{showing_contacts}"
+        # showing_contacts = "\n".join([str(record) for record in records])
+        # return f"{"Phonebook:":-^100}\n{showing_contacts}"
+        return self.__form_table(records)
+        
 
     @input_error
     def __add_birthday(self, args) -> str:
