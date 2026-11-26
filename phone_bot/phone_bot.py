@@ -11,6 +11,7 @@ from address_book.exceptions import (
     NameInputError,
     NoContactError,
     PhoneInputError,
+    AddressInputError,
 )
 from address_book.record import Record
 from phone_bot.exceptions import (
@@ -35,7 +36,13 @@ def input_error(func: Callable):
             return "Give me name and phone please."
         except IndexError:
             return "Enter the argument for the command"
-        except (PhoneInputError, NoContactError, DateInputError, NameInputError, EmailInputError) as e:
+        except (
+            PhoneInputError,
+            NoContactError,
+            DateInputError,
+            NameInputError,
+            EmailInputError,
+        ) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
             raise
@@ -64,6 +71,11 @@ class PhoneBot:
             "change-birthday": self.__change_birthday,
             "delete-birthday": self.__delete_birthday,
             "birthdays": self.__show_birthdays,
+            "add-address": self.__add_address,
+            "show-address": self.__show_address,
+            "change-address": self.__change_address,
+            "delete-address": self.__delete_address,
+            "show-all-addresses": self.__show_all_addresses,
             "help": self.__show_commands,
             "close": self.__close,
             "exit": self.__close,
@@ -182,92 +194,123 @@ class PhoneBot:
         self.book.delete(name)
 
         return f"Contact {Fore.RED}{name}{Fore.RESET} deleted."
-    
+
     @staticmethod
-    def __form_table(records:list[Record]):
+    def __form_table(records: list[Record]):
         table_contacts = [record.record_table_row for record in records]
         table = tabulate(
             table_contacts,
             headers=[colorize(header, Color.MAGENTA) for header in PhoneBot.headers],
             tablefmt="fancy_grid",
-            showindex=[colorize(str(i), Color.MAGENTA) for i in range(1, len(table_contacts) + 1)],
+            showindex=[
+                colorize(str(i), Color.MAGENTA)
+                for i in range(1, len(table_contacts) + 1)
+            ],
             maxcolwidths=15,
-            disable_numparse=True
+            disable_numparse=True,
         )
         return table
-        
-    def __show_contact_phones(self, args)->str:
+
+    def __show_contact_phones(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
-        
+
         return record.get_phones()
-    
 
     @input_error
     def __show_contact(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
 
-        # return str(record)
         return self.__form_table([record])
 
-    # @input_error
     def __show_all_contacts(self, _) -> str:
         records = self.book.values()
         if not len(records):
             return "No contacts"
 
-        # showing_contacts = "\n".join([str(record) for record in records])
-        # return f"{"Phonebook:":-^100}\n{showing_contacts}"
         return self.__form_table(records)
-        
 
     @input_error
     def __add_birthday(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: add-birthday <name> <birthday>"
+
         name, birthday, *_ = args
         record = self.book.find(name)
-        record.add_birthday(birthday)
+        if not record.birthday:
+            record.add_birthday(birthday)
 
-        return str(record)
+        else:
+            if (
+                input(
+                    f"{Fore.GREEN}{name}{Fore.RESET} has birthday record. Change it? y/n "
+                ).lower()
+                == "y"
+            ):
+                record.change_birthday(birthday)
+
+        return self.__show_birthday([name])
 
     @input_error
     def __show_birthday(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: show-birthday <name>"
         name = args[0]
         record = self.book.find(name)
         birthday = record.birthday if record else None
 
         return (
-            f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+            f"{Fore.BLUE}{name}: {Fore.GREEN}{birthday}{Fore.RESET}"
             if birthday
             else "No birthday found"
         )
 
     @input_error
     def __change_birthday(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: change-birthday <name> <birthday>"
         name, birthday, *_ = args
         record = self.book.find(name)
         record.change_birthday(birthday)
 
-        return f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+        # return self.__form_table([record])
+        return self.__show_birthday([name])
 
     @input_error
     def __delete_birthday(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: show-birthday <name>"
         name = args[0]
         record = self.book.find(name)
         record.del_birthday()
 
-        return f"{Fore.BLUE}{name}: {Fore.GREEN}{"Birthday deleted"}{Fore.RESET}"
+        return f"{Fore.BLUE}{name}: {Fore.RED}{"Birthday deleted"}{Fore.RESET}"
 
     @input_error
-    def __show_birthdays(self, _) -> str:
+    def __show_birthdays(self, args) -> str:
+        if len(args) > 1:
+            return "Usage: birthdays [number of days]"
+
+        try:
+            days = int(args[0]) if args else 7
+        except ValueError:
+            return "Please enter a valid number of days."
+
+        if days <= 0:
+            return "Number of days must be greater than zero."
+
         upcoming = "; ".join(
             [
                 f"{congrat["name"]} : {congrat["congratulation_date"]}"
-                for congrat in self.book.get_upcoming_birthdays()
+                for congrat in self.book.get_upcoming_birthdays(
+                    days=days, is_workday_congrats=False
+                )
             ]
         )
+
         if not upcoming:
-            return "No upcoming birthdays"
+            return f"No upcoming birthdays in the next {days} days."
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
@@ -298,6 +341,62 @@ class PhoneBot:
         record.del_email()
 
         return f"Email of {Fore.BLUE}{name}{Fore.RESET} deleted."
+
+    @input_error
+    def __add_address(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: add-address <name> <address>"
+
+        name, *address_parts = args
+        address = " ".join(address_parts)
+
+        record = self.book.find(name)
+        record.add_address(address)
+        # to show an updated record in a table format
+        return self.__form_table([record])
+
+    @input_error
+    def __show_address(self, args) -> str:
+        name = args[0]  # Index Error if empty args
+        record = self.book.find(name)
+        address = record.address if record else None
+
+        return (
+            f"{Fore.BLUE}{name}: {Fore.GREEN}{address}{Fore.RESET}"
+            if address
+            else "No address found"
+        )
+
+    @input_error
+    def __change_address(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: change-address <name> <new-address>"
+
+        name, *address_parts = args
+        address = " ".join(address_parts)
+        record = self.book.find(name)
+        record.change_address(address)
+        # to show an updated record in a table format
+        return self.__form_table([record])
+
+    @input_error
+    def __delete_address(self, args):
+        name = args[0]  # Index Error if empty args
+        record = self.book.find(name)
+        record.del_address()
+        return f"{Fore.BLUE}{name}: " f"{Fore.GREEN}Address deleted{Fore.RESET}"
+
+    @input_error
+    def __show_all_addresses(self, _) -> str:
+        # shows only records with addresses
+        records = [
+            record for record in self.book.values() if getattr(record, "address", None)
+        ]
+
+        if not records:
+            return "No addresses found"
+
+        return self.__form_table(records)
 
     @input_error
     def __show_commands(self, _) -> None:

@@ -14,6 +14,8 @@ def error_handler(func):
             raise DateInputError(str(e))
         except EmailInputError as e:
             raise EmailInputError(str(e))
+        except AddressInputError as e:
+            raise AddressInputError(str(e))
         except Exception as e:
             print(f"An error occurred: {e}")
 
@@ -37,4 +39,8 @@ class DateInputError(Exception):
 
 
 class EmailInputError(Exception):
+    pass
+
+
+class AddressInputError(Exception):
     pass
