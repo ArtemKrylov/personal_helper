@@ -1,5 +1,6 @@
 1. install venv and requirements:
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
 2. Use develop branch
@@ -13,3 +14,8 @@ git checkout your-branch-name
 4. python -m main
 
 5.Make pull request from your branch into develop
+
+
+
+6. for exe rebuild: 
+pyinstaller --onefile --console --icon=icon.ico --name PersonalHelper main.py 

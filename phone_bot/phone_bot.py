@@ -2,10 +2,25 @@ from functools import wraps
 from typing import Callable
 
 from colorama import Fore
+from tabulate import tabulate
 
 from address_book.address_book import AddressBook
-from address_book.exceptions import DateInputError, EmailInputError, NoContactError, PhoneInputError
+from address_book.exceptions import (
+    DateInputError,
+    EmailInputError,
+    NameInputError,
+    NoContactError,
+    PhoneInputError,
+)
 from address_book.record import Record
+from phone_bot.exceptions import (
+    BreakError,
+    ContactExist,
+    ContactNotExist,
+    ContinueError,
+)
+from phone_bot.suggest_command import suggest_command
+from utils.colorize import Color, colorize
 
 
 def input_error(func: Callable):
@@ -20,7 +35,7 @@ def input_error(func: Callable):
             return "Give me name and phone please."
         except IndexError:
             return "Enter the argument for the command"
-        except (PhoneInputError, NoContactError, DateInputError, EmailInputError) as e:
+        except (PhoneInputError, NoContactError, DateInputError, NameInputError, EmailInputError) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
             raise
@@ -30,44 +45,33 @@ def input_error(func: Callable):
     return inner
 
 
-class BreakError(Exception):
-    pass
-
-
-class ContinueError(Exception):
-    pass
-
-
-class ContactExist(Exception):
-    pass
-
-
-class ContactNotExist(Exception):
-    pass
-
-
 class PhoneBot:
-    def __init__(self, book: AddressBook = {}):
+    headers = ["№", "Name", "Phones", "Birthday", "Address", "Email", "Notes"]
+
+    def __init__(self, book: AddressBook | None = None):
         # Add new command here (command name: executed function)
         self.commands = {
-            "hello": self._hello,
-            "add": self._add_contact,
-            "add-phone-to-contact": self._add_contact_phone,
-            "change": self._change_contact,
-            "del": self._delete_contact,
-            "phone": self._show_contact,
-            "all": self._show_all_contacts,
-            "add-birthday": self._add_birthday,
-            "show-birthday": self._show_birthday,
-            "birthdays": self._show_birthdays,
-            "help": self._show_commands,
-            "close": self._close,
-            "exit": self._close,
-            "add-email": self._add_email,
-            "show-email": self._show_email,
-            "del-email": self._delete_email,
+            "hello": self.__hello,
+            "add": self.__add_contact,
+            "add-phone-to-contact": self.__add_contact_phone,
+            "change": self.__change_contact,
+            "del": self.__delete_contact,
+            "phones": self.__show_contact_phones,
+            "show": self.__show_contact,
+            "all": self.__show_all_contacts,
+            "add-birthday": self.__add_birthday,
+            "show-birthday": self.__show_birthday,
+            "change-birthday": self.__change_birthday,
+            "delete-birthday": self.__delete_birthday,
+            "birthdays": self.__show_birthdays,
+            "help": self.__show_commands,
+            "close": self.__close,
+            "exit": self.__close,
+            "add-email": self.__add_email,
+            "show-email": self.__show_email,
+            "del-email": self.__delete_email,
         }
-        self.book = book
+        self.book = book if book is not None else AddressBook()
 
     def start_bot(self):
         print(f"""\n{"Welcome to the assistant bot!":*^100}
@@ -86,11 +90,14 @@ class PhoneBot:
             command, *args = self._parse_input(user_input)
 
             try:
-                message = self.commands[command](args)
+                match = suggest_command(command, self.commands)
+                handler = self.commands.get(match) if match is not None else None
+                if handler is None:
+                    print("Unknown command")
+                    continue
+                message = handler(args)
                 if message:
                     print(message)
-            except KeyError:
-                print("Unknown command")
             except BreakError:
                 break
             except ContinueError:
@@ -114,10 +121,10 @@ class PhoneBot:
         return cmd, *args
 
     @input_error
-    def _hello(self, _):
+    def __hello(self, _):
         print("How can I help you?")
 
-    def _form_record_from_args(self, args) -> Record:
+    def __form_record_from_args(self, args) -> Record:
         name, phone, *rest = args
         birthday = rest[0] if rest else None
         new_record = Record(name)
@@ -128,7 +135,7 @@ class PhoneBot:
         return new_record
 
     @input_error
-    def _add_contact(self, args) -> str | None:
+    def __add_contact(self, args) -> str | None:
         name = args[0]
 
         try:
@@ -137,13 +144,13 @@ class PhoneBot:
         except NoContactError:
             pass
 
-        new_record = self._form_record_from_args(args)
+        new_record = self.__form_record_from_args(args)
         self.book.add_record(new_record)
 
         return f"Contact {Fore.BLUE}{name}{Fore.RESET} added."
 
     @input_error
-    def _add_contact_phone(self, args) -> str | None:
+    def __add_contact_phone(self, args) -> str | None:
         name, phone = args
 
         if name not in self.book.data:
@@ -158,7 +165,7 @@ class PhoneBot:
         return f"Phone {Fore.GREEN}{phone}{Fore.RESET} added to contact {Fore.BLUE}{name}{Fore.RESET}."
 
     @input_error
-    def _change_contact(self, args) -> str | None:
+    def __change_contact(self, args) -> str | None:
         name, phone, *rest = args
         birthday = rest[0] if rest else None
 
@@ -170,31 +177,53 @@ class PhoneBot:
         return f"Contact {Fore.BLUE}{name}{Fore.RESET} updated."
 
     @input_error
-    def _delete_contact(self, args) -> str:
+    def __delete_contact(self, args) -> str:
         name = args[0]
         self.book.delete(name)
 
         return f"Contact {Fore.RED}{name}{Fore.RESET} deleted."
+    
+    @staticmethod
+    def __form_table(records:list[Record]):
+        table_contacts = [record.record_table_row for record in records]
+        table = tabulate(
+            table_contacts,
+            headers=[colorize(header, Color.MAGENTA) for header in PhoneBot.headers],
+            tablefmt="fancy_grid",
+            showindex=[colorize(str(i), Color.MAGENTA) for i in range(1, len(table_contacts) + 1)],
+            maxcolwidths=15,
+            disable_numparse=True
+        )
+        return table
+        
+    def __show_contact_phones(self, args)->str:
+        name = args[0]
+        record = self.book.find(name)
+        
+        return record.get_phones()
+    
 
     @input_error
-    def _show_contact(self, args) -> str:
+    def __show_contact(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
 
-        return str(record)
+        # return str(record)
+        return self.__form_table([record])
 
-    @input_error
-    def _show_all_contacts(self, _) -> str:
+    # @input_error
+    def __show_all_contacts(self, _) -> str:
         records = self.book.values()
         if not len(records):
             return "No contacts"
 
-        showing_contacts = "\n".join([str(record) for record in records])
-
-        return f"{"Phonebook:":-^100}\n{showing_contacts}"
+        # showing_contacts = "\n".join([str(record) for record in records])
+        # return f"{"Phonebook:":-^100}\n{showing_contacts}"
+        return self.__form_table(records)
+        
 
     @input_error
-    def _add_birthday(self, args) -> str:
+    def __add_birthday(self, args) -> str:
         name, birthday, *_ = args
         record = self.book.find(name)
         record.add_birthday(birthday)
@@ -202,7 +231,7 @@ class PhoneBot:
         return str(record)
 
     @input_error
-    def _show_birthday(self, args) -> str:
+    def __show_birthday(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
         birthday = record.birthday if record else None
@@ -214,7 +243,23 @@ class PhoneBot:
         )
 
     @input_error
-    def _show_birthdays(self, _) -> str:
+    def __change_birthday(self, args) -> str:
+        name, birthday, *_ = args
+        record = self.book.find(name)
+        record.change_birthday(birthday)
+
+        return f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+
+    @input_error
+    def __delete_birthday(self, args) -> str:
+        name = args[0]
+        record = self.book.find(name)
+        record.del_birthday()
+
+        return f"{Fore.BLUE}{name}: {Fore.GREEN}{"Birthday deleted"}{Fore.RESET}"
+
+    @input_error
+    def __show_birthdays(self, _) -> str:
         upcoming = "; ".join(
             [
                 f"{congrat["name"]} : {congrat["congratulation_date"]}"
@@ -227,7 +272,7 @@ class PhoneBot:
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
     @input_error
-    def _add_email(self, args) -> str:
+    def __add_email(self, args) -> str:
         name, email, *_ = args
         record = self.book.find(name)
         record.add_email(email)
@@ -235,7 +280,7 @@ class PhoneBot:
         return str(record)
 
     @input_error
-    def _show_email(self, args) -> str:
+    def __show_email(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
         email = record.email if record else None
@@ -247,7 +292,7 @@ class PhoneBot:
         )
 
     @input_error
-    def _delete_email(self, args) -> str:
+    def __delete_email(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
         record.del_email()
@@ -255,10 +300,10 @@ class PhoneBot:
         return f"Email of {Fore.BLUE}{name}{Fore.RESET} deleted."
 
     @input_error
-    def _show_commands(self, _) -> None:
+    def __show_commands(self, _) -> None:
         print(f"All commands: {', '.join(self.commands)}")
 
     @input_error
-    def _close(self, _) -> None:
-        print("Good bye!")
+    def __close(self, _) -> None:
+        print("Goodbye!")
         raise BreakError
