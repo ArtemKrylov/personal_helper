@@ -4,6 +4,7 @@ from address_book.fields.birthday import Birthday
 from address_book.exceptions import PhoneInputError, error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
+from address_book.fields.address import Address
 
 from utils.colorize import Color, colorize
 
@@ -20,10 +21,11 @@ class Record:
     def __str__(self):
         phones = self.get_phones()
         birthday = str(self.birthday) if self.birthday is not None else "no data"
+        address = str(self.address) if self.address else "no data"
         name_column_lenght = 17
 
         name_column = str(self.name)[: name_column_lenght - 1] + ":"
-        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
+        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{' ' * 3}Address: {address}{Fore.RESET}"
 
     @property
     def record_table_row(self):
@@ -86,3 +88,12 @@ class Record:
         self,
     ) -> None:
         self.birthday = None
+
+    def add_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def change_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def del_address(self) -> None:
+        self.address = None
