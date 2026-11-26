@@ -48,9 +48,12 @@ class AddressBook(UserDict):
         self,
         date_format: str = DATE_FORMAT,
         is_workday_congrats: bool = True,
+        days: int = 7,
     ) -> list:
         # gets users list with name and birhday properties and return list of upcoming birthday within next 7 day (including today); if is_workday_congrats param is true and birthday is on weekend day - moves congrat to nearest workday
-
+        if type(days) is not int or days <= 0:
+            raise ValueError("Number of days must be a positive integer")
+        
         curr_date = datetime.today()
         congrats = []
 
@@ -74,7 +77,7 @@ class AddressBook(UserDict):
             day_of_birth_this_year = birthday_this_year.weekday()
 
             delta_days = birthday_this_year.toordinal() - curr_date.toordinal()
-            if delta_days >= 7 or delta_days < 0:
+            if delta_days >= days or delta_days < 0:
                 continue
 
             is_weekend = day_of_birth_this_year in WEEKEND_DAYS

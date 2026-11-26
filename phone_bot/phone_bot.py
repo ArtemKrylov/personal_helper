@@ -255,15 +255,27 @@ class PhoneBot:
         return f"{Fore.BLUE}{name}: {Fore.GREEN}{"Birthday deleted"}{Fore.RESET}"
 
     @input_error
-    def __show_birthdays(self, _) -> str:
+    def __show_birthdays(self, args) -> str:
+        if len(args) > 1:
+            return "Usage: birthdays [number of days]"
+        
+        try:
+            days = int(args[0]) if args else 7
+        except ValueError:
+            return "Please enter a valid number of days."
+        
+        if days <= 0:
+            return "Number of days must be greater than zero."
+
         upcoming = "; ".join(
             [
                 f"{congrat["name"]} : {congrat["congratulation_date"]}"
-                for congrat in self.book.get_upcoming_birthdays()
+                for congrat in self.book.get_upcoming_birthdays(days = days, is_workday_congrats=False)
             ]
         )
+
         if not upcoming:
-            return "No upcoming birthdays"
+            return f"No upcoming birthdays in the next {days} days."
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
