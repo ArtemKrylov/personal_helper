@@ -4,7 +4,7 @@ from typing import Callable
 from colorama import Fore
 
 from address_book.address_book import AddressBook
-from address_book.exceptions import DateInputError, NoContactError, PhoneInputError
+from address_book.exceptions import DateInputError, EmailInputError, NoContactError, PhoneInputError
 from address_book.record import Record
 
 
@@ -20,7 +20,7 @@ def input_error(func: Callable):
             return "Give me name and phone please."
         except IndexError:
             return "Enter the argument for the command"
-        except (PhoneInputError, NoContactError, DateInputError) as e:
+        except (PhoneInputError, NoContactError, DateInputError, EmailInputError) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
             raise
@@ -63,6 +63,9 @@ class PhoneBot:
             "help": self._show_commands,
             "close": self._close,
             "exit": self._close,
+            "add-email": self._add_email,
+            "show-email": self._show_email,
+            "del-email": self._delete_email,
         }
         self.book = book
 
@@ -222,6 +225,34 @@ class PhoneBot:
             return "No upcoming birthdays"
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
+
+    @input_error
+    def _add_email(self, args) -> str:
+        name, email, *_ = args
+        record = self.book.find(name)
+        record.add_email(email)
+
+        return str(record)
+
+    @input_error
+    def _show_email(self, args) -> str:
+        name = args[0]
+        record = self.book.find(name)
+        email = record.email if record else None
+
+        return (
+            f"{Fore.BLUE}{name}: {Fore.GREEN}{str(email)}{Fore.RESET}"
+            if email
+            else "No email found"
+        )
+
+    @input_error
+    def _delete_email(self, args) -> str:
+        name = args[0]
+        record = self.book.find(name)
+        record.del_email()
+
+        return f"Email of {Fore.BLUE}{name}{Fore.RESET} deleted."
 
     @input_error
     def _show_commands(self, _) -> None:

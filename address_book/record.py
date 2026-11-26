@@ -4,6 +4,7 @@ from address_book.fields.birthday import Birthday
 from address_book.exceptions import error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
+from address_book.fields.email import Email
 
 
 class Record:
@@ -11,14 +12,16 @@ class Record:
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.email = None
 
     def __str__(self):
         phones = self.get_phones()
         birthday = str(self.birthday) if self.birthday is not None else "no data"
+        email = str(self.email) if self.email is not None else "no data"
         name_column_lenght = 17
 
         name_column = str(self.name)[: name_column_lenght - 1] + ":"
-        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
+        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{' '*3}Email: {email}{Fore.RESET}"
 
     def get_phones(self) -> str:
         return ", ".join([str(phone) for phone in self.phones])
@@ -62,3 +65,11 @@ class Record:
         self,
     ) -> None:
         self.birthday = None
+
+    @error_handler
+    def add_email(self, email: str) -> None:
+        self.email = Email(email)
+
+    @error_handler
+    def del_email(self) -> None:
+        self.email = None
