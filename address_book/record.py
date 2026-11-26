@@ -27,7 +27,7 @@ class Record:
 
     @property
     def record_table_row(self):
-        name = colorize(str(getattr(self, "name", None)), Color.GREEN)
+        name = colorize(str(getattr(self, "name", None)), Color.BLUE)
         phones = ", ".join(
             [colorize(str(phone)) for phone in getattr(self, "phones", None) or []]
         )
@@ -43,7 +43,7 @@ class Record:
             birthday,
             address,
             email,
-            notes,  
+            notes,
         ]
 
     def get_phones(self) -> str:
@@ -76,15 +76,12 @@ class Record:
     def find_phone(self, phone: str) -> Phone | None:
         return next((item for item in self.phones if item.value == phone), None)
 
-    @error_handler
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
-    @error_handler
     def change_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
-    @error_handler
     def del_birthday(
         self,
     ) -> None:

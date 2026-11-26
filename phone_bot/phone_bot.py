@@ -34,7 +34,12 @@ def input_error(func: Callable):
             return "Give me name and phone please."
         except IndexError:
             return "Enter the argument for the command"
-        except (PhoneInputError, NoContactError, DateInputError, NameInputError) as e:
+        except (
+            PhoneInputError,
+            NoContactError,
+            DateInputError,
+            NameInputError,
+        ) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
             raise
@@ -178,81 +183,97 @@ class PhoneBot:
         self.book.delete(name)
 
         return f"Contact {Fore.RED}{name}{Fore.RESET} deleted."
-    
+
     @staticmethod
-    def __form_table(records:list[Record]):
+    def __form_table(records: list[Record]):
         table_contacts = [record.record_table_row for record in records]
         table = tabulate(
             table_contacts,
             headers=[colorize(header, Color.MAGENTA) for header in PhoneBot.headers],
             tablefmt="fancy_grid",
-            showindex=[colorize(str(i), Color.MAGENTA) for i in range(1, len(table_contacts) + 1)],
+            showindex=[
+                colorize(str(i), Color.MAGENTA)
+                for i in range(1, len(table_contacts) + 1)
+            ],
             maxcolwidths=15,
-            disable_numparse=True
+            disable_numparse=True,
         )
         return table
-        
-    def __show_contact_phones(self, args)->str:
+
+    def __show_contact_phones(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
-        
+
         return record.get_phones()
-    
 
     @input_error
     def __show_contact(self, args) -> str:
         name = args[0]
         record = self.book.find(name)
 
-        # return str(record)
         return self.__form_table([record])
 
-    # @input_error
     def __show_all_contacts(self, _) -> str:
         records = self.book.values()
         if not len(records):
             return "No contacts"
 
-        # showing_contacts = "\n".join([str(record) for record in records])
-        # return f"{"Phonebook:":-^100}\n{showing_contacts}"
         return self.__form_table(records)
-        
 
     @input_error
     def __add_birthday(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: add-birthday <name> <birthday>"
+
         name, birthday, *_ = args
         record = self.book.find(name)
-        record.add_birthday(birthday)
+        if not record.birthday:
+            record.add_birthday(birthday)
 
-        return str(record)
+        else:
+            if (
+                input(
+                    f"{Fore.GREEN}{name}{Fore.RESET} has birthday record. Change it? y/n "
+                ).lower()
+                == "y"
+            ):
+                record.change_birthday(birthday)
+
+        return self.__form_table([record])
 
     @input_error
     def __show_birthday(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: show-birthday <name>"
         name = args[0]
         record = self.book.find(name)
         birthday = record.birthday if record else None
 
         return (
-            f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+            f"{Fore.BLUE}{name}: {Fore.GREEN}{birthday}{Fore.RESET}"
             if birthday
             else "No birthday found"
         )
 
     @input_error
     def __change_birthday(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: change-birthday <name> <birthday>"
         name, birthday, *_ = args
         record = self.book.find(name)
         record.change_birthday(birthday)
 
-        return f"{Fore.BLUE}{name}: {Fore.GREEN}{str(birthday)}{Fore.RESET}"
+        return self.__form_table([record])
 
     @input_error
     def __delete_birthday(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: show-birthday <name>"
         name = args[0]
         record = self.book.find(name)
         record.del_birthday()
 
-        return f"{Fore.BLUE}{name}: {Fore.GREEN}{"Birthday deleted"}{Fore.RESET}"
+        return f"{Fore.BLUE}{name}: {Fore.RED}{"Birthday deleted"}{Fore.RESET}"
 
     @input_error
     def __show_birthdays(self, _) -> str:
