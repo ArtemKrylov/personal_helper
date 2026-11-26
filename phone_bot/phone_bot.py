@@ -245,7 +245,7 @@ class PhoneBot:
             ):
                 record.change_birthday(birthday)
 
-        return self.__form_table([record])
+        return self.__show_birthday([name])
 
     @input_error
     def __show_birthday(self, args) -> str:
@@ -269,7 +269,8 @@ class PhoneBot:
         record = self.book.find(name)
         record.change_birthday(birthday)
 
-        return self.__form_table([record])
+        # return self.__form_table([record])
+        return self.__show_birthday([name])
 
     @input_error
     def __delete_birthday(self, args) -> str:
@@ -285,19 +286,21 @@ class PhoneBot:
     def __show_birthdays(self, args) -> str:
         if len(args) > 1:
             return "Usage: birthdays [number of days]"
-        
+
         try:
             days = int(args[0]) if args else 7
         except ValueError:
             return "Please enter a valid number of days."
-        
+
         if days <= 0:
             return "Number of days must be greater than zero."
 
         upcoming = "; ".join(
             [
                 f"{congrat["name"]} : {congrat["congratulation_date"]}"
-                for congrat in self.book.get_upcoming_birthdays(days = days, is_workday_congrats=False)
+                for congrat in self.book.get_upcoming_birthdays(
+                    days=days, is_workday_congrats=False
+                )
             ]
         )
 
@@ -321,7 +324,7 @@ class PhoneBot:
 
     @input_error
     def __show_address(self, args) -> str:
-        name = args[0] # Index Error if empty args
+        name = args[0]  # Index Error if empty args
         record = self.book.find(name)
         address = record.address if record else None
 
@@ -345,27 +348,23 @@ class PhoneBot:
 
     @input_error
     def __delete_address(self, args):
-        name = args[0] # Index Error if empty args
+        name = args[0]  # Index Error if empty args
         record = self.book.find(name)
         record.del_address()
-        return (
-            f"{Fore.BLUE}{name}: "
-            f"{Fore.GREEN}Address deleted{Fore.RESET}"
-        )
+        return f"{Fore.BLUE}{name}: " f"{Fore.GREEN}Address deleted{Fore.RESET}"
 
     @input_error
-    def __show_all_addresses(self,_) -> str:
+    def __show_all_addresses(self, _) -> str:
         # shows only records with addresses
         records = [
-            record for record in self.book.values()
-            if getattr(record, "address", None)
+            record for record in self.book.values() if getattr(record, "address", None)
         ]
 
         if not records:
             return "No addresses found"
 
         return self.__form_table(records)
-    
+
     @input_error
     def __show_commands(self, _) -> None:
         print(f"All commands: {', '.join(self.commands)}")
