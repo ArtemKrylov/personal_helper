@@ -9,6 +9,5 @@ class Color(StrEnum):
     MAGENTA = Fore.MAGENTA
 
 
-def colorize(text: str, color: Color = Color.BLUE) -> str:
+def colorize(text: str, color: Color = Color.GREEN) -> str:
     return f"{color}{text}{Style.RESET_ALL}" if text else None
- 
