@@ -44,6 +44,42 @@ class AddressBook(UserDict):
             raise NoContactError(f"Contact with name {name} does not exist")
         self.data.pop(name)
 
+    def search_notes(self, query: str) -> list[dict]:
+        search_text = query.strip().lower()
+
+        if not search_text:
+            return[]
+
+        results = []
+
+        for record in self.values():
+            for note in record.notes:
+                if search_text in note.value.lower():
+                    results.append(
+                        {
+                            "name": str(record.name),
+                            "note": note.value,
+                        }
+                    )
+
+        return results
+
+    def sort_notes(self) -> list[dict]:
+        notes = []
+
+        for record in self.values():
+            for note in record.notes:
+                notes.append(
+                    {
+                        "name": str(record.name),
+                        "note": note.value,
+                    }
+                )
+        return sorted(
+            notes,
+            key=lambda item: item["note"].lower(),
+        )
+
     def get_upcoming_birthdays(
         self,
         date_format: str = DATE_FORMAT,

@@ -53,8 +53,12 @@ class PhoneBot:
             "hello": self.__hello,
             "add": self.__add_contact,
             "add-phone-to-contact": self.__add_contact_phone,
+            "add-note": self.__add_note,
+            "search-notes": self.__add_note, 
             "change": self.__change_contact,
             "del": self.__delete_contact,
+            "del-note": self.__delete_note,
+            "edit-note": self.__edit_note,
             "phones": self.__show_contact_phones,
             "show": self.__show_contact,
             "all": self.__show_all_contacts,
@@ -198,7 +202,6 @@ class PhoneBot:
         
         return record.get_phones()
     
-
     @input_error
     def __show_contact(self, args) -> str:
         name = args[0]
@@ -266,6 +269,82 @@ class PhoneBot:
             return "No upcoming birthdays"
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
+
+
+    @input_error
+    def __add_note(self, args) -> str:
+        name, *note_parts = args
+
+        if not note_parts:
+            return "Enter contact name and note text."
+
+        record = self.book.find(name)
+        text = " ".join(note_parts)
+        record.add_note(text)
+
+        return f"Note added to {Fore.BLUE}{name}{Fore.RESET}."
+
+    @input_error
+    def __search_notes(self, args) -> str:
+        query = " ".join(args)
+
+        if not query:
+            return"Enter text to search."
+
+        notes = self.book.search_notes(query)
+
+        if not notes:
+            return "No notes found."
+
+        result = []
+
+        for item in notes:
+            result =[]
+
+        for item in notes:
+            result.append(
+                f"{item['name']}: {'item'['note']}"
+            )
+
+        return "\n".join(result)
+
+    @input_error
+    def __edit_note(self, args) -> str:
+        if "|" not in args:
+            return "Use: edit-note <name> <old note> | <new note>."
+
+        name = args[0]
+        note_parts = args[1:]
+        separator_index = note_parts.index("|")
+
+        old_parts = note_parts[:separator_index]
+        new_parts = note_parts[separator_index + 1:]
+
+        if not old_parts or not new_parts:
+            return "Enter old and new note text."
+
+        record = self.book.find(name)
+
+        old_text = " ".join(old_parts)
+        new_text = " ".join(new_parts)
+
+        record.edit_note(old_text, new_text)
+
+        return f"Note updated for {Fore.BLUE}{Fore.RESET}."
+
+    @input_error
+    def __delete_note(self, args) -> str:
+        if len(args) < 2:
+            return "Enter contact name and note text."
+
+        name = args[0]
+        text = " ".join(args[1:])
+
+        record = self.book.find(name)
+        record.delete_note(text)
+
+        return f"Note deleted from {Fore.BLUE}{name}{Fore.RESET}."
+
 
     @input_error
     def __show_commands(self, _) -> None:
