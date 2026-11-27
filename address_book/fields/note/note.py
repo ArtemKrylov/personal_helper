@@ -21,6 +21,8 @@ class Note(Field):
         return None
 
     def delete_tag(self, value: str) -> None:
+        tag = self.find_tag(value)
+
         if tag is None:
             raise ValueError("Tag not found")
 
