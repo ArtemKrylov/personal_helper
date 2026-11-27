@@ -1,24 +1,32 @@
 import pickle
+import sys
 from pathlib import Path
 import colorama
 
 
 from address_book import AddressBook
 from phone_bot import PhoneBot
-from run_with_theme import run_with_theme
+
+if getattr(sys, "frozen", False):
+    # For .exe.
+    PROJECT_DIR = Path(sys.executable).resolve().parent.parent
+else:
+    # for consol run
+    PROJECT_DIR = Path(__file__).resolve().parent
+
+# to use the same pkl in console run and .exe
+DATA_FILE = PROJECT_DIR / "storage" / "addressbook.pkl"
 
 
 def main():
-    def save_data(book, file_path="storage/addressbook.pkl"):
-        path = Path(file_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("wb") as f:
+    def save_data(book):
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with DATA_FILE.open("wb") as f:
             pickle.dump(book, f)
 
-    def load_data(file_path="storage/addressbook.pkl"):
-        path = Path(file_path)
+    def load_data():
         try:
-            with path.open("rb") as f:
+            with DATA_FILE.open("rb") as f:
                 book = pickle.load(f)
             if not isinstance(book, AddressBook):
                 raise pickle.UnpicklingError("Expected a saved address book")
@@ -47,7 +55,7 @@ def main():
 
 if __name__ == "__main__":
     colorama.init(autoreset=True)
-    # run_with_theme(main)
+
     try:
         main()
     except Exception as e:
