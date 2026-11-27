@@ -12,7 +12,11 @@ COMMAND_HELP = {
         "to see its usage and example, or add 'desc' "
         "to view its detailed description.",
     ),
-
+    "commands": (
+        "commands",
+        "commands",
+        "Displays all available commands list in short.",
+    ),
     # Contact management
     "add": (
         "add <name> <phone> [birthday]",
@@ -37,8 +41,7 @@ COMMAND_HELP = {
     "show": (
         "show <name>",
         "show Peter",
-        "Displays detailed information about a specific "
-        "contact in a table format.",
+        "Displays detailed information about a specific " "contact in a table format.",
     ),
     "all": (
         "all",
@@ -46,22 +49,31 @@ COMMAND_HELP = {
         "Displays all saved contacts and their associated "
         "information in a table format.",
     ),
-
     # Phone management
-    "add-phone-to-contact": (
-        "add-phone-to-contact <name> <phone>",
-        "add-phone-to-contact Peter 0987654321",
+    "add-phone": (
+        "add-phone <name> <phone>",
+        "add-phone Peter 0987654321",
         "Adds an additional phone number to a contact. "
         "Duplicate phone numbers are not allowed. "
         "If the contact does not exist, offers to create it.",
     ),
+    "change-phone": (
+        "change-phone <name> <old-phone> <new-phone>",
+        "change-phone Peter 0987654321",
+        "Changes contact phone number from old-phone to new-phone"
+        "If phone already exists - prints it",
+    ),
+    "del-phone": (
+        "del-phone <name> <phone>",
+        "del-phone Peter 0987654321",
+        "Deletes entered phone number from contacts phones"
+        "If the phone number does not exist, prints it.",
+    ),
     "phones": (
         "phones <name>",
         "phones Peter",
-        "Displays all phone numbers associated with "
-        "the specified contact.",
+        "Displays all phone numbers associated with " "the specified contact.",
     ),
-
     # Birthday management
     "add-birthday": (
         "add-birthday <name> <birthday>",
@@ -82,11 +94,10 @@ COMMAND_HELP = {
         "Updates the birthday of an existing contact. "
         "The new date must be in DD.MM.YYYY format.",
     ),
-    "delete-birthday": (
-        "delete-birthday <name>",
-        "delete-birthday Peter",
-        "Removes the birthday from a contact without "
-        "deleting the contact itself.",
+    "del-birthday": (
+        "del-birthday <name>",
+        "del-birthday Peter",
+        "Removes the birthday from a contact without " "deleting the contact itself.",
     ),
     "birthdays": (
         "birthdays [days]",
@@ -97,7 +108,6 @@ COMMAND_HELP = {
         "must be a positive integer. Weekend birthdays "
         "are displayed on their actual dates.",
     ),
-
     # Address management
     "add-address": (
         "add-address <name> <address>",
@@ -118,11 +128,10 @@ COMMAND_HELP = {
         "Replaces the current address of an existing contact "
         "with the provided address.",
     ),
-    "delete-address": (
-        "delete-address <name>",
-        "delete-address Peter",
-        "Removes the address from a contact without "
-        "deleting the contact itself.",
+    "del-address": (
+        "del-address <name>",
+        "del-address Peter",
+        "Removes the address from a contact without " "deleting the contact itself.",
     ),
     "show-all-addresses": (
         "show-all-addresses",
@@ -131,7 +140,6 @@ COMMAND_HELP = {
         "that have a saved address. Contacts without "
         "an address are excluded.",
     ),
-
     # Email management
     "add-email": (
         "add-email <name> <email>",
@@ -149,16 +157,14 @@ COMMAND_HELP = {
     "show-email": (
         "show-email <name>",
         "show-email Peter",
-        "Displays the saved email address of "
-        "the specified contact.",
+        "Displays the saved email address of " "the specified contact.",
     ),
-    "delete-email": (
-        "delete-email <name>",
-        "delete-email Peter",
+    "del-email": (
+        "del-email <name>",
+        "del-email Peter",
         "Removes the email address from a contact "
         "without deleting the contact itself.",
     ),
-
     # Note management
     "add-note": (
         "add-note <name> <note>",
@@ -185,7 +191,6 @@ COMMAND_HELP = {
         "Searches saved notes using the provided text "
         "and displays matching notes with contact names.",
     ),
-
     # Tag management
     "add-tag": (
         "add-tag <name> <note text> | <tag>",
@@ -213,13 +218,11 @@ COMMAND_HELP = {
         "Displays notes organized by their tags, "
         "including contact names, note text and tags.",
     ),
-
     # Exit commands
     "close": (
         "close",
         "close",
-        "Closes the assistant and saves the address book "
-        "for future sessions.",
+        "Closes the assistant and saves the address book " "for future sessions.",
     ),
     "exit": (
         "exit",
