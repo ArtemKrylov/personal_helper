@@ -7,6 +7,7 @@ from tabulate import tabulate
 from address_book.address_book import AddressBook
 from address_book.exceptions import (
     DateInputError,
+    EmailInputError,
     NameInputError,
     NoContactError,
     PhoneInputError,
@@ -40,6 +41,8 @@ def input_error(func: Callable):
             NoContactError,
             DateInputError,
             NameInputError,
+            AddressInputError,
+            EmailInputError,
         ) as e:
             return str(e)
         except (BreakError, ContinueError, ContactExist, ContactNotExist):
@@ -54,7 +57,6 @@ class PhoneBot:
     headers = ["№", "Name", "Phones", "Birthday", "Address", "Email", "Notes"]
 
     def __init__(self, book: AddressBook | None = None):
-        # Add new command here (command name: executed function)
         self.commands = {
             "hello": self.__hello,
             "add": self.__add_contact,
@@ -74,6 +76,9 @@ class PhoneBot:
             "change-address": self.__change_address,
             "delete-address": self.__delete_address,
             "show-all-addresses": self.__show_all_addresses,
+            "add-email": self.__add_email,
+            "show-email": self.__show_email,
+            "delete-email": self.__delete_email,
             "help": self.__show_commands,
             "close": self.__close,
             "exit": self.__close,
@@ -154,7 +159,8 @@ class PhoneBot:
         new_record = self.__form_record_from_args(args)
         self.book.add_record(new_record)
 
-        return f"Contact {Fore.BLUE}{name}{Fore.RESET} added."
+        print(f"Contact {Fore.BLUE}{name}{Fore.RESET} added.")
+        return self.__form_table([new_record])
 
     @input_error
     def __add_contact_phone(self, args) -> str | None:
@@ -180,8 +186,10 @@ class PhoneBot:
             raise ContactNotExist
 
         self.book.change_record(name, phone, birthday)
+        record = self.book.find(name)
 
-        return f"Contact {Fore.BLUE}{name}{Fore.RESET} updated."
+        print(f"Contact {Fore.BLUE}{name}{Fore.RESET} updated.")
+        return self.__form_table([record])
 
     @input_error
     def __delete_contact(self, args) -> str:
@@ -245,7 +253,8 @@ class PhoneBot:
             ):
                 record.change_birthday(birthday)
 
-        return self.__show_birthday([name])
+        print(f"Birthday added: {self.__show_birthday([name])}")
+        return self.__form_table([record])
 
     @input_error
     def __show_birthday(self, args) -> str:
@@ -269,8 +278,8 @@ class PhoneBot:
         record = self.book.find(name)
         record.change_birthday(birthday)
 
-        # return self.__form_table([record])
-        return self.__show_birthday([name])
+        print(f"Birthday changed: {self.__show_birthday([name])}")
+        return self.__form_table([record])
 
     @input_error
     def __delete_birthday(self, args) -> str:
@@ -310,6 +319,44 @@ class PhoneBot:
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
     @input_error
+    def __add_email(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: add-email <name> <email>"
+
+        name, email, *_ = args
+        record = self.book.find(name)
+        record.add_email(email)
+
+        print(f"Email added: {self.__show_email([name])}")
+        return self.__form_table([record])
+
+    @input_error
+    def __show_email(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: show-email <name>"
+
+        name = args[0]
+        record = self.book.find(name)
+        email = record.email if record else None
+
+        return (
+            f"{Fore.BLUE}{name}: {Fore.GREEN}{str(email)}{Fore.RESET}"
+            if email
+            else "No email found"
+        )
+
+    @input_error
+    def __delete_email(self, args) -> str:
+        if len(args) < 1:
+            return "Usage: delete-email <name>"
+
+        name = args[0]
+        record = self.book.find(name)
+        record.del_email()
+
+        return f"{Fore.BLUE}{name}: {Fore.RED}{"Email deleted"}{Fore.RESET}"
+
+    @input_error
     def __add_address(self, args) -> str:
         if len(args) < 2:
             return "Usage: add-address <name> <address>"
@@ -320,6 +367,8 @@ class PhoneBot:
         record = self.book.find(name)
         record.add_address(address)
         # to show an updated record in a table format
+
+        print(f"Address added: {self.__show_address([name])}")
         return self.__form_table([record])
 
     @input_error
@@ -344,6 +393,7 @@ class PhoneBot:
         record = self.book.find(name)
         record.change_address(address)
         # to show an updated record in a table format
+        print(f"Address changed: {self.__show_address([name])}")
         return self.__form_table([record])
 
     @input_error
