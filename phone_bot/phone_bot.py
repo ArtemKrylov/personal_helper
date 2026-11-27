@@ -563,10 +563,23 @@ class PhoneBot:
         address = " ".join(address_parts)
 
         record = self.book.find(name)
-        record.add_address(address)
-        # to show an updated record in a table format
+        if not record.address:
+            record.add_address(address)
+            print(f"Address added: {self.__show_address([name])}")
+        else:
+            if (
+                input(
+                    f"{Fore.GREEN}{name}{Fore.RESET} has address record. Change it? y/n "
+                )
+                .strip()
+                .lower()
+                == "y"
+            ):
+                record.change_address(address)
+                print("Address was successfully updated")
+            else:
+                return "Address was not updated"
 
-        print(f"Address added: {self.__show_address([name])}")
         return self.__form_table([record])
 
     @input_error
@@ -604,14 +617,27 @@ class PhoneBot:
     @input_error
     def __show_all_addresses(self, _) -> str:
         # shows only records with addresses
-        records = [
-            record for record in self.book.values() if getattr(record, "address", None)
+        addresses = [
+            [colorize(str(record.name), Color.BLUE), colorize(str(record.address))]
+            for record in self.book.values()
+            if record.address
         ]
 
-        if not records:
+        if not addresses:
             return "No addresses found"
 
-        return self.__form_table(records)
+        return tabulate(
+            addresses,
+            headers=[
+                colorize(header, Color.MAGENTA) for header in ["№", "Name", "Address"]
+            ],
+            tablefmt="fancy_grid",
+            showindex=[
+                colorize(str(i), Color.MAGENTA) for i in range(1, len(addresses) + 1)
+            ],
+            maxcolwidths=35,
+            disable_numparse=True,
+        )
 
     @input_error
     def __show_commands(self, _) -> None:
