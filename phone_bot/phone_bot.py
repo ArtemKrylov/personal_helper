@@ -1,5 +1,6 @@
 from functools import wraps
 from typing import Callable
+from phone_bot.command_help import COMMAND_HELP
 
 from colorama import Fore
 from tabulate import tabulate
@@ -95,9 +96,11 @@ class PhoneBot:
         self.book = book if book is not None else AddressBook()
 
     def start_bot(self):
-        print(f"""\n{"Welcome to the assistant bot!":*^100}
-    Commands list: {', '.join(self.commands)}
-            """)
+        print(
+            f"\n{' Welcome to the assistant bot! ':*^100}\n"
+            f"Type {Fore.GREEN}help{Fore.RESET} to see all available commands.\n"
+            f"Type {Fore.GREEN}exit{Fore.RESET} to close the application.\n"
+        )
         while True:
             try:
                 user_input = input("Enter a command: ")
@@ -622,9 +625,41 @@ class PhoneBot:
 
         return self.__form_table(records)
 
+
     @input_error
-    def __show_commands(self, _) -> None:
-        print(f"All commands: {', '.join(self.commands)}")
+    
+    def __show_commands(self, args) -> str:
+        if args:
+            command = args[0].lower()
+    
+            if command not in COMMAND_HELP:
+                return f"Unknown command: {command}"
+    
+            usage, example, description = COMMAND_HELP[command]
+    
+            if len(args) == 2 and args[1].lower() == "desc":
+                return f"{Fore.MAGENTA}Description:{Fore.RESET} {description}"
+    
+            if len(args) > 1:
+                return "Usage: help [command] [desc]"
+    
+            return (
+                f"Usage: {usage}\n"
+                f"Example: {example}"
+            )
+    
+        rows = [
+            [colorize(command, Color.GREEN), usage, example]
+            for command, (usage, example, _) in COMMAND_HELP.items()
+        ]
+    
+        return tabulate(
+            rows,
+            headers=["Command", "Usage", "Example"],
+            tablefmt="fancy_grid",
+            disable_numparse=True,
+        )
+    
 
     @input_error
     def __close(self, _) -> None:
