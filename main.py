@@ -6,14 +6,15 @@ import colorama
 
 from address_book import AddressBook
 from phone_bot import PhoneBot
-from run_with_theme import run_with_theme
 
 if getattr(sys, "frozen", False):
-    # The executable is built into the project's dist directory.
+    # For .exe.
     PROJECT_DIR = Path(sys.executable).resolve().parent.parent
 else:
+    # for consol run
     PROJECT_DIR = Path(__file__).resolve().parent
 
+# to use the same pkl in console run and .exe
 DATA_FILE = PROJECT_DIR / "storage" / "addressbook.pkl"
 
 
@@ -54,7 +55,7 @@ def main():
 
 if __name__ == "__main__":
     colorama.init(autoreset=True)
-    # run_with_theme(main)
+
     try:
         main()
     except Exception as e:
