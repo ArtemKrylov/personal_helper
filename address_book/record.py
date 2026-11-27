@@ -5,6 +5,8 @@ from address_book.exceptions import PhoneInputError, error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
 from address_book.fields.note.note import Note
+from address_book.fields.email import Email
+from address_book.fields.address import Address
 
 from utils.colorize import Color, colorize
 
@@ -21,11 +23,14 @@ class Record:
     def __str__(self):
         phones = self.get_phones()
         birthday = str(self.birthday) if self.birthday is not None else "no data"
+        email = str(self.email) if self.email is not None else "no data"
+        address = str(self.address) if self.address else "no data"
         name_column_lenght = 17
 
         name_column = str(self.name)[: name_column_lenght - 1] + ":"
-        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{Fore.RESET}"
-    
+
+        return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{' '*3}Email: {email}{' '*3}Address: {address}{Fore.RESET}"
+
     def add_note(self, text: str) -> None:
         self.notes.append(Note(text))
 
@@ -43,7 +48,7 @@ class Record:
             raise ValueError("Note not found")
 
         note.value = new_text.strip()
-    
+
     def delete_note(self, text: str) -> None:
         note = self.find_note(text)
 
@@ -52,9 +57,11 @@ class Record:
 
         self.notes.remove(note)
 
+
+
     @property
     def record_table_row(self):
-        name = colorize(str(getattr(self, "name", None)), Color.GREEN)
+        name = colorize(str(getattr(self, "name", None)), Color.BLUE)
         phones = ", ".join(
             [colorize(str(phone)) for phone in getattr(self, "phones", None) or []]
         )
@@ -70,7 +77,7 @@ class Record:
             birthday,
             address,
             email,
-            notes,  
+            notes,
         ]
 
     def get_phones(self) -> str:
@@ -103,16 +110,30 @@ class Record:
     def find_phone(self, phone: str) -> Phone | None:
         return next((item for item in self.phones if item.value == phone), None)
 
-    @error_handler
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
-    @error_handler
     def change_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
-    @error_handler
     def del_birthday(
         self,
     ) -> None:
         self.birthday = None
+
+    @error_handler
+    def add_email(self, email: str) -> None:
+        self.email = Email(email)
+
+    @error_handler
+    def del_email(self) -> None:
+        self.email = None
+
+    def add_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def change_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def del_address(self) -> None:
+        self.address = None

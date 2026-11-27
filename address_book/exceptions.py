@@ -12,6 +12,10 @@ def error_handler(func):
             raise NoContactError(str(e))
         except DateInputError as e:
             raise DateInputError(str(e))
+        except EmailInputError as e:
+            raise EmailInputError(str(e))
+        except AddressInputError as e:
+            raise AddressInputError(str(e))
         except Exception as e:
             print(f"An error occurred: {e}")
 
@@ -31,4 +35,12 @@ class PhoneInputError(Exception):
 
 
 class DateInputError(Exception):
+    pass
+
+
+class EmailInputError(Exception):
+    pass
+
+
+class AddressInputError(Exception):
     pass
