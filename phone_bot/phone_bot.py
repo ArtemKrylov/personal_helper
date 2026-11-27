@@ -60,38 +60,47 @@ class PhoneBot:
     def __init__(self, book: AddressBook | None = None):
         self.commands = {
             "hello": self.__hello,
+            "help": self.__show_commands,
+            "close": self.__close,
+            "exit": self.__close,
+            # contact
             "add": self.__add_contact,
-            "add-phone-to-contact": self.__add_contact_phone,
-            "add-note": self.__add_note,
-            "add-tag": self.__add_tag,
-            "search-notes": self.__search_notes,
-            "search-tags": self.__search_tags,
+            "show": self.__show_contact,
             "change": self.__change_contact,
             "del": self.__delete_contact,
+            "all": self.__show_all_contacts,
+            # phones
+            "add-phone": self.__add_contact_phone,
+            "change-phone": self.__change_contact_phone,
+            "delete-phone": self.__delete_contact_phone,
+            "phones": self.__show_contact_phones,
+            # notes
+            "add-note": self.__add_note,
+            "edit-note": self.__edit_note,
             "del-note": self.__delete_note,
+            "search-notes": self.__search_notes,
+            # tags
+            "add-tag": self.__add_tag,
+            "search-tags": self.__search_tags,
             "del-tag": self.__delete_tag,
             "sort-tags": self.__sort_tags,
-            "edit-note": self.__edit_note,
-            "phones": self.__show_contact_phones,
-            "show": self.__show_contact,
-            "all": self.__show_all_contacts,
+            # birthday
             "add-birthday": self.__add_birthday,
             "show-birthday": self.__show_birthday,
             "change-birthday": self.__change_birthday,
             "delete-birthday": self.__delete_birthday,
             "birthdays": self.__show_birthdays,
+            # address
             "add-address": self.__add_address,
             "show-address": self.__show_address,
             "change-address": self.__change_address,
             "delete-address": self.__delete_address,
             "show-all-addresses": self.__show_all_addresses,
+            # email
             "add-email": self.__add_email,
             "change-email": self.__change_email,
             "show-email": self.__show_email,
             "delete-email": self.__delete_email,
-            "help": self.__show_commands,
-            "close": self.__close,
-            "exit": self.__close,
         }
         self.book = book if book is not None else AddressBook()
 
@@ -158,6 +167,7 @@ class PhoneBot:
             new_record.add_birthday(birthday)
         return new_record
 
+    # Contact
     @input_error
     def __add_contact(self, args) -> str | None:
         name = args[0]
@@ -173,21 +183,6 @@ class PhoneBot:
 
         print(f"Contact {Fore.BLUE}{name}{Fore.RESET} added.")
         return self.__form_table([new_record])
-
-    @input_error
-    def __add_contact_phone(self, args) -> str | None:
-        name, phone = args
-
-        if name not in self.book.data:
-            raise ContactNotExist
-
-        record = self.book.find(name)
-        if record.find_phone(phone):
-            return "Phone already exists"
-
-        self.book.add_record_phone(name, phone)
-
-        return f"Phone {Fore.GREEN}{phone}{Fore.RESET} added to contact {Fore.BLUE}{name}{Fore.RESET}."
 
     @input_error
     def __change_contact(self, args) -> str | None:
@@ -226,13 +221,6 @@ class PhoneBot:
         )
         return table
 
-    def __show_contact_phones(self, args) -> str:
-        name = args[0]
-        record = self.book.find(name)
-
-        return record.get_phones()
-    
-
     @input_error
     def __show_contact(self, args) -> str:
         name = args[0]
@@ -247,6 +235,58 @@ class PhoneBot:
 
         return self.__form_table(records)
 
+    # Phones
+    @input_error
+    def __add_contact_phone(self, args) -> str | None:
+        name, phone = args
+
+        if name not in self.book.data:
+            raise ContactNotExist
+
+        record = self.book.find(name)
+        if record.find_phone(phone):
+            return "Phone already exists"
+
+        self.book.add_record_phone(name, phone)
+
+        print(
+            f"Phone {Fore.GREEN}{phone}{Fore.RESET} added to contact {Fore.BLUE}{name}{Fore.RESET}."
+        )
+        return self.__form_table([record])
+
+    def __show_contact_phones(self, args) -> str:
+        name = args[0]
+        record = self.book.find(name)
+
+        return record.get_phones()
+
+    @input_error
+    def __change_contact_phone(self, args) -> str | None:
+        name, old_phone, new_phone = args
+
+        if name not in self.book.data:
+            raise ContactNotExist
+
+        record = self.book.find(name)
+        if record.find_phone(new_phone):
+            return f"Phone {new_phone} already exists"
+
+        record.edit_phone(old_phone, new_phone)
+
+        print(f"Phone changed: {self.__show_contact_phones([name])}")
+        return self.__form_table([record])
+
+    @input_error
+    def __delete_contact_phone(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: delete-phone <name> <phone>"
+        name, phone = args
+        record = self.book.find(name)
+        record.remove_phone(phone)
+
+        return f"{Fore.BLUE}{name}: {Fore.RED}{"Phone deleted"}{Fore.RESET}"
+
+    # Birthday
     @input_error
     def __add_birthday(self, args) -> str:
         if len(args) < 2:
@@ -265,6 +305,8 @@ class PhoneBot:
                 == "y"
             ):
                 record.change_birthday(birthday)
+            else:
+                return "Birthday not changed"
 
         print(f"Birthday added: {self.__show_birthday([name])}")
         return self.__form_table([record])
@@ -331,7 +373,7 @@ class PhoneBot:
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
-
+    # Note
     @input_error
     def __add_note(self, args) -> str:
         name, *note_parts = args
@@ -350,7 +392,7 @@ class PhoneBot:
         query = " ".join(args)
 
         if not query:
-            return"Enter text to search."
+            return "Enter text to search."
 
         notes = self.book.search_notes(query)
 
@@ -360,9 +402,7 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']}"
-            )
+            result.append(f"{item['name']}: {item['note']}")
 
         return "\n".join(result)
 
@@ -376,7 +416,7 @@ class PhoneBot:
         separator_index = note_parts.index("|")
 
         old_parts = note_parts[:separator_index]
-        new_parts = note_parts[separator_index + 1:]
+        new_parts = note_parts[separator_index + 1 :]
 
         if not old_parts or not new_parts:
             return "Enter old and new note text."
@@ -403,7 +443,7 @@ class PhoneBot:
 
         return f"Note deleted from {Fore.BLUE}{name}{Fore.RESET}."
 
-
+    # Tag
     @input_error
     def __add_tag(self, args) -> str:
         if "|" not in args:
@@ -414,7 +454,7 @@ class PhoneBot:
         separator_index = parts.index("|")
 
         note_parts = parts[:separator_index]
-        tag_parts = parts[separator_index + 1:]
+        tag_parts = parts[separator_index + 1 :]
 
         if not note_parts or not tag_parts:
             return "Enter note text and tag."
@@ -428,7 +468,7 @@ class PhoneBot:
 
         if note is None:
             return "Note not found."
-       
+
         note.add_tag(tag_value)
 
         return f"Tag added to note for {Fore.BLUE}{name}{Fore.RESET}."
@@ -443,7 +483,7 @@ class PhoneBot:
         separator_index = parts.index("|")
 
         note_parts = parts[:separator_index]
-        tag_parts = parts[separator_index + 1:]
+        tag_parts = parts[separator_index + 1 :]
 
         if not note_parts or not tag_parts:
             return "Enter note text and tag."
@@ -480,10 +520,7 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']} "
-                f"[{item['tag']}]"
-            )
+            result.append(f"{item['name']}: {item['note']} " f"[{item['tag']}]")
 
         return "\n".join(result)
 
@@ -497,13 +534,11 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']}"
-                f"[{item['tag']}]"
-            )
+            result.append(f"{item['name']}: {item['note']}" f"[{item['tag']}]")
 
         return "\n".join(result)
 
+    # Email
     @input_error
     def __add_email(self, args) -> str:
         if len(args) < 2:
@@ -566,6 +601,7 @@ class PhoneBot:
 
         return f"{Fore.BLUE}{name}: {Fore.RED}{"Email deleted"}{Fore.RESET}"
 
+    # Address
     @input_error
     def __add_address(self, args) -> str:
         if len(args) < 2:
@@ -575,10 +611,23 @@ class PhoneBot:
         address = " ".join(address_parts)
 
         record = self.book.find(name)
-        record.add_address(address)
-        # to show an updated record in a table format
+        if not record.address:
+            record.add_address(address)
+            print(f"Address added: {self.__show_address([name])}")
+        else:
+            if (
+                input(
+                    f"{Fore.GREEN}{name}{Fore.RESET} has address record. Change it? y/n "
+                )
+                .strip()
+                .lower()
+                == "y"
+            ):
+                record.change_address(address)
+                print("Address was successfully updated")
+            else:
+                return "Address was not updated"
 
-        print(f"Address added: {self.__show_address([name])}")
         return self.__form_table([record])
 
     @input_error
@@ -616,14 +665,27 @@ class PhoneBot:
     @input_error
     def __show_all_addresses(self, _) -> str:
         # shows only records with addresses
-        records = [
-            record for record in self.book.values() if getattr(record, "address", None)
+        addresses = [
+            [colorize(str(record.name), Color.BLUE), colorize(str(record.address))]
+            for record in self.book.values()
+            if record.address
         ]
 
-        if not records:
+        if not addresses:
             return "No addresses found"
 
-        return self.__form_table(records)
+        return tabulate(
+            addresses,
+            headers=[
+                colorize(header, Color.MAGENTA) for header in ["№", "Name", "Address"]
+            ],
+            tablefmt="fancy_grid",
+            showindex=[
+                colorize(str(i), Color.MAGENTA) for i in range(1, len(addresses) + 1)
+            ],
+            maxcolwidths=35,
+            disable_numparse=True,
+        )
 
 
     @input_error
