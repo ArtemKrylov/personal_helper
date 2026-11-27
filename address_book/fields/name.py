@@ -7,7 +7,7 @@ class Name(Field):
         if not isinstance(value, str) or not value.strip():
             raise NameInputError("Incorrect name")
 
-        super().__init__(value)
+        super().__init__(value.strip())
 
     def __str__(self):
         return self.value
