@@ -97,9 +97,13 @@ class Record:
         self.email = Email(email)
 
     @error_handler
+    def change_email(self, email: str) -> None:
+        self.email = Email(email)
+
+    @error_handler
     def del_email(self) -> None:
         self.email = None
-        
+
     def add_address(self, address: str) -> None:
         self.address = Address(address)
 
