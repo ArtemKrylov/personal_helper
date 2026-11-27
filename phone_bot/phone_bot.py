@@ -1,5 +1,6 @@
 from functools import wraps
 from typing import Callable
+from phone_bot.command_help import COMMAND_HELP
 
 from colorama import Fore
 from tabulate import tabulate
@@ -60,19 +61,20 @@ class PhoneBot:
         self.commands = {
             "hello": self.__hello,
             "help": self.__show_commands,
+            "commands": self.__show_commands_short,
             "close": self.__close,
             "exit": self.__close,
             # contact
-            "add": self.__add_contact,
+            "all": self.__show_all_contacts,
             "show": self.__show_contact,
+            "add": self.__add_contact,
             "change": self.__change_contact,
             "del": self.__delete_contact,
-            "all": self.__show_all_contacts,
             # phones
+            "phones": self.__show_contact_phones,
             "add-phone": self.__add_contact_phone,
             "change-phone": self.__change_contact_phone,
-            "delete-phone": self.__delete_contact_phone,
-            "phones": self.__show_contact_phones,
+            "del-phone": self.__delete_contact_phone,
             # notes
             "add-note": self.__add_note,
             "edit-note": self.__edit_note,
@@ -84,29 +86,32 @@ class PhoneBot:
             "del-tag": self.__delete_tag,
             "sort-tags": self.__sort_tags,
             # birthday
-            "add-birthday": self.__add_birthday,
             "show-birthday": self.__show_birthday,
-            "change-birthday": self.__change_birthday,
-            "delete-birthday": self.__delete_birthday,
             "birthdays": self.__show_birthdays,
+            "add-birthday": self.__add_birthday,
+            "change-birthday": self.__change_birthday,
+            "del-birthday": self.__delete_birthday,
             # address
+            "show-all-addresses": self.__show_all_addresses,
             "add-address": self.__add_address,
             "show-address": self.__show_address,
             "change-address": self.__change_address,
-            "delete-address": self.__delete_address,
-            "show-all-addresses": self.__show_all_addresses,
+            "del-address": self.__delete_address,
             # email
+            "show-email": self.__show_email,
             "add-email": self.__add_email,
             "change-email": self.__change_email,
-            "show-email": self.__show_email,
-            "delete-email": self.__delete_email,
+            "del-email": self.__delete_email,
         }
         self.book = book if book is not None else AddressBook()
 
     def start_bot(self):
-        print(f"""\n{"Welcome to the assistant bot!":*^100}
-    Commands list: {', '.join(self.commands)}
-            """)
+        print(
+            f"\n{' Welcome to the assistant bot! ':*^100}\n"
+            f"Type {Fore.GREEN}help{Fore.RESET} to see all available commands.\n"
+            f"Type {Fore.GREEN}exit{Fore.RESET} to close the application.\n"
+            f"\nCommands list: {', '.join(self.commands)}\n"
+        )
         while True:
             try:
                 user_input = input("Enter a command: ")
@@ -276,7 +281,7 @@ class PhoneBot:
     @input_error
     def __delete_contact_phone(self, args) -> str:
         if len(args) < 2:
-            return "Usage: delete-phone <name> <phone>"
+            return "Usage: del-phone <name> <phone>"
         name, phone = args
         record = self.book.find(name)
         record.remove_phone(phone)
@@ -473,7 +478,7 @@ class PhoneBot:
     @input_error
     def __delete_tag(self, args) -> str:
         if "|" not in args:
-            return "Use: delete-tag <name> <note text> | <tag>."
+            return "Usage: del-tag <name> <note text> | <tag>."
 
         name = args[0]
         parts = args[1:]
@@ -590,7 +595,7 @@ class PhoneBot:
     @input_error
     def __delete_email(self, args) -> str:
         if len(args) < 1:
-            return "Usage: delete-email <name>"
+            return "Usage: del-email <name>"
 
         name = args[0]
         record = self.book.find(name)
@@ -685,8 +690,47 @@ class PhoneBot:
         )
 
     @input_error
-    def __show_commands(self, _) -> None:
-        print(f"All commands: {', '.join(self.commands)}")
+    def __show_command_usage(self, args) -> str:
+        if len(args) < 1:
+            return "Enter command name"
+
+        command = args[0].lower()
+        if command not in COMMAND_HELP:
+            return f"Unknown command: {command}"
+
+        return COMMAND_HELP[command][0]
+
+    def __show_commands_short(self, args) -> str:
+        return f"\nCommands list: {', '.join(self.commands)}\n"
+
+    def __show_commands(self, args) -> str:
+        if args:
+            command = args[0].lower()
+
+            if command not in COMMAND_HELP:
+                return f"Unknown command: {command}"
+
+            usage, example, description = COMMAND_HELP[command]
+
+            if len(args) == 2 and args[1].lower() == "desc":
+                return f"{Fore.MAGENTA}Description:{Fore.RESET} {description}"
+
+            if len(args) > 1:
+                return "Usage: help [command] [desc]"
+
+            return f"Usage: {usage}\n" f"Example: {example}\n"
+
+        rows = [
+            [colorize(command, Color.GREEN), usage, example]
+            for command, (usage, example, _) in COMMAND_HELP.items()
+        ]
+
+        return tabulate(
+            rows,
+            headers=["Command", "Usage", "Example"],
+            tablefmt="fancy_grid",
+            disable_numparse=True,
+        )
 
     @input_error
     def __close(self, _) -> None:
