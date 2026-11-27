@@ -4,6 +4,7 @@ from address_book.fields.birthday import Birthday
 from address_book.exceptions import PhoneInputError, error_handler
 from address_book.fields.name import Name
 from address_book.fields.phone import Phone
+from address_book.fields.note.note import Note
 from address_book.fields.email import Email
 from address_book.fields.address import Address
 
@@ -27,9 +28,37 @@ class Record:
         name_column_lenght = 17
 
         name_column = str(self.name)[: name_column_lenght - 1] + ":"
+
         return f"{Fore.BLUE}{name_column:<{name_column_lenght}}{' '*7}{Fore.GREEN}Phones: {phones}{' '*3}Birthday: {birthday}{' '*3}Email: {email}{' '*3}Address: {address}{Fore.RESET}"
 
-        
+    def add_note(self, text: str) -> None:
+        self.notes.append(Note(text))
+
+    def find_note(self, text: str) -> Note | None:
+        for note in self.notes:
+            if note.value == text:
+                return note
+
+        return None
+
+    def edit_note(self, old_text: str, new_text: str) -> None:
+        note = self.find_note(old_text)
+
+        if note is None:
+            raise ValueError("Note not found")
+
+        note.value = new_text.strip()
+
+    def delete_note(self, text: str) -> None:
+        note = self.find_note(text)
+
+        if note is None:
+            raise ValueError("Note not found")
+
+        self.notes.remove(note)
+
+
+
     @property
     def record_table_row(self):
         name = colorize(str(getattr(self, "name", None)), Color.BLUE)
