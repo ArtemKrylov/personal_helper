@@ -41,6 +41,7 @@ def input_error(func: Callable):
             NoContactError,
             DateInputError,
             NameInputError,
+            AddressInputError,
             EmailInputError,
         ) as e:
             return str(e)
