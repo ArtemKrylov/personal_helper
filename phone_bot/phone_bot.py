@@ -85,6 +85,7 @@ class PhoneBot:
             "delete-address": self.__delete_address,
             "show-all-addresses": self.__show_all_addresses,
             "add-email": self.__add_email,
+            "change-email": self.__change_email,
             "show-email": self.__show_email,
             "delete-email": self.__delete_email,
             "help": self.__show_commands,
@@ -507,9 +508,33 @@ class PhoneBot:
 
         name, email, *_ = args
         record = self.book.find(name)
-        record.add_email(email)
+        if not record.email:
+            record.add_email(email)
+            print(f"Email added: {self.__show_email([name])}")
+        else:
+            if (
+                input(
+                    f"{Fore.GREEN}{name}{Fore.RESET} has email record. Change it? y/n "
+                ).lower()
+                == "y"
+            ):
+                record.change_email(email)
+                print(f"Email changed: {self.__show_email([name])}")
+            else:
+                return "Email not changed."
 
-        print(f"Email added: {self.__show_email([name])}")
+        return self.__form_table([record])
+
+    @input_error
+    def __change_email(self, args) -> str:
+        if len(args) < 2:
+            return "Usage: change-email <name> <email>"
+
+        name, email, *_ = args
+        record = self.book.find(name)
+        record.change_email(email)
+
+        print(f"Email changed: {self.__show_email([name])}")
         return self.__form_table([record])
 
     @input_error
