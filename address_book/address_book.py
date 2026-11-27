@@ -44,6 +44,84 @@ class AddressBook(UserDict):
             raise NoContactError(f"Contact with name {name} does not exist")
         self.data.pop(name)
 
+    def search_notes(self, query: str) -> list[dict]:
+        search_text = query.strip().lower()
+
+        if not search_text:
+            return[]
+
+        results = []
+
+        for record in self.values():
+            for note in record.notes:
+                if search_text in note.value.lower():
+                    results.append(
+                        {
+                            "name": str(record.name),
+                            "note": note.value,
+                        }
+                    )
+
+        return results
+
+    def sort_notes(self) -> list[dict]:
+        notes = []
+
+        for record in self.values():
+            for note in record.notes:
+                notes.append(
+                    {
+                        "name": str(record.name),
+                        "note": note.value,
+                    }
+                )
+        return sorted(
+            notes,
+            key=lambda item: item["note"].lower(),
+        )
+
+    def search_notes_by_tag(self, tag_value: str) -> list [dict]:
+        normalized_tag = tag_value.strip().lower()
+        results = []
+
+        if not normalized_tag:
+            return results
+
+        for record in self.values():
+            for note in record.notes:
+                if note.find_tag(normalized_tag) is not None:
+                    results.append(
+                        {
+                            "name": str(record.name),
+                            "note": note.value,
+                            "tag": normalized_tag,
+                        }
+                    )
+
+        return results
+
+    def sort_notes_by_tag(self) -> list[dict]:
+        notes =[]
+
+        for record in self.values():
+            for note in record.notes:
+                for tag in note.tags:
+                    notes.append(
+                    {
+                            "name": str(record.name),
+                            "note": note.value,
+                            "tag": tag.value,
+                        }
+                    )
+        
+        return sorted(
+            notes,
+            key=lambda item: (
+                item["tag"],
+                item["note"].lower(),
+            )
+        )
+
     def get_upcoming_birthdays(
         self,
         date_format: str = DATE_FORMAT,

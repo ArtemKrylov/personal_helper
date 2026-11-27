@@ -61,8 +61,16 @@ class PhoneBot:
             "hello": self.__hello,
             "add": self.__add_contact,
             "add-phone-to-contact": self.__add_contact_phone,
+            "add-note": self.__add_note,
+            "add-tag": self.__add_tag,
+            "search-notes": self.__search_notes,
+            "search-tags": self.__search_tags,
             "change": self.__change_contact,
             "del": self.__delete_contact,
+            "del-note": self.__delete_note,
+            "del-tag": self.__delete_tag,
+            "sort-tags": self.__sort_tags,
+            "edit-note": self.__edit_note,
             "phones": self.__show_contact_phones,
             "show": self.__show_contact,
             "all": self.__show_all_contacts,
@@ -219,6 +227,7 @@ class PhoneBot:
         record = self.book.find(name)
 
         return record.get_phones()
+    
 
     @input_error
     def __show_contact(self, args) -> str:
@@ -317,6 +326,179 @@ class PhoneBot:
             return f"No upcoming birthdays in the next {days} days."
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
+
+
+    @input_error
+    def __add_note(self, args) -> str:
+        name, *note_parts = args
+
+        if not note_parts:
+            return "Enter contact name and note text."
+
+        record = self.book.find(name)
+        text = " ".join(note_parts)
+        record.add_note(text)
+
+        return f"Note added to {Fore.BLUE}{name}{Fore.RESET}."
+
+    @input_error
+    def __search_notes(self, args) -> str:
+        query = " ".join(args)
+
+        if not query:
+            return"Enter text to search."
+
+        notes = self.book.search_notes(query)
+
+        if not notes:
+            return "No notes found."
+
+        result = []
+
+        for item in notes:
+            result.append(
+                f"{item['name']}: {item['note']}"
+            )
+
+        return "\n".join(result)
+
+    @input_error
+    def __edit_note(self, args) -> str:
+        if "|" not in args:
+            return "Use: edit-note <name> <old note> | <new note>."
+
+        name = args[0]
+        note_parts = args[1:]
+        separator_index = note_parts.index("|")
+
+        old_parts = note_parts[:separator_index]
+        new_parts = note_parts[separator_index + 1:]
+
+        if not old_parts or not new_parts:
+            return "Enter old and new note text."
+
+        record = self.book.find(name)
+
+        old_text = " ".join(old_parts)
+        new_text = " ".join(new_parts)
+
+        record.edit_note(old_text, new_text)
+
+        return f"Note updated for {Fore.BLUE}{name}{Fore.RESET}."
+
+    @input_error
+    def __delete_note(self, args) -> str:
+        if len(args) < 2:
+            return "Enter contact name and note text."
+
+        name = args[0]
+        text = " ".join(args[1:])
+
+        record = self.book.find(name)
+        record.delete_note(text)
+
+        return f"Note deleted from {Fore.BLUE}{name}{Fore.RESET}."
+
+
+    @input_error
+    def __add_tag(self, args) -> str:
+        if "|" not in args:
+            return "Use: add-tag <name> <note text> | <tag>."
+
+        name = args[0]
+        parts = args[1:]
+        separator_index = parts.index("|")
+
+        note_parts = parts[:separator_index]
+        tag_parts = parts[separator_index + 1:]
+
+        if not note_parts or not tag_parts:
+            return "Enter note text and tag."
+
+        record = self.book.find(name)
+
+        note_text = " ".join(note_parts)
+        tag_value = " ".join(tag_parts)
+
+        note = record.find_note(note_text)
+
+        if note is None:
+            return "Note not found."
+       
+        note.add_tag(tag_value)
+
+        return f"Tag added to note for {Fore.BLUE}{name}{Fore.RESET}."
+
+    @input_error
+    def __delete_tag(self, args) -> str:
+        if "|" not in args:
+            return "Use: delete-tag <name> <note text> | <tag>."
+
+        name = args[0]
+        parts = args[1:]
+        separator_index = parts.index("|")
+
+        note_parts = parts[:separator_index]
+        tag_parts = parts[separator_index + 1:]
+
+        if not note_parts or not tag_parts:
+            return "Enter note text and tag."
+
+        record = self.book.find(name)
+
+        note_text = " ".join(note_parts)
+        tag_value = " ".join(tag_parts)
+
+        note = record.find_note(note_text)
+
+        if note is None:
+            return "Note not found."
+
+        if note.find_tag(tag_value) is None:
+            return "Tag not found."
+
+        note.delete_tag(tag_value)
+
+        return f"Tag deleted from note for {Fore.BLUE}{name}{Fore.RESET}."
+
+    @input_error
+    def __search_tags(self, args) -> str:
+        tag_value = " ".join(args).strip()
+
+        if not tag_value:
+            return "Enter tag to search."
+
+        notes = self.book.search_notes_by_tag(tag_value)
+
+        if not notes:
+            return "No notes found for this tag."
+
+        result = []
+
+        for item in notes:
+            result.append(
+                f"{item['name']}: {item['note']} "
+                f"[{item['tag']}]"
+            )
+
+        return "\n".join(result)
+
+    @input_error
+    def __sort_tags(self, args) -> str:
+        notes = self.book.sort_notes_by_tag()
+
+        if not notes:
+            return "No tagged notes found."
+
+        result = []
+
+        for item in notes:
+            result.append(
+                f"{item['name']}: {item['note']}"
+                f"[{item['tag']}]"
+            )
+
+        return "\n".join(result)
 
     @input_error
     def __add_email(self, args) -> str:
