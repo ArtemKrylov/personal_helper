@@ -227,7 +227,6 @@ class PhoneBot:
         record = self.book.find(name)
 
         return record.get_phones()
-    
 
     @input_error
     def __show_contact(self, args) -> str:
@@ -327,7 +326,6 @@ class PhoneBot:
 
         return f"{Fore.BLUE}Upcoming birthdays: {Fore.GREEN}{upcoming}{Fore.RESET}"
 
-
     @input_error
     def __add_note(self, args) -> str:
         name, *note_parts = args
@@ -346,7 +344,7 @@ class PhoneBot:
         query = " ".join(args)
 
         if not query:
-            return"Enter text to search."
+            return "Enter text to search."
 
         notes = self.book.search_notes(query)
 
@@ -356,9 +354,7 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']}"
-            )
+            result.append(f"{item['name']}: {item['note']}")
 
         return "\n".join(result)
 
@@ -372,7 +368,7 @@ class PhoneBot:
         separator_index = note_parts.index("|")
 
         old_parts = note_parts[:separator_index]
-        new_parts = note_parts[separator_index + 1:]
+        new_parts = note_parts[separator_index + 1 :]
 
         if not old_parts or not new_parts:
             return "Enter old and new note text."
@@ -399,7 +395,6 @@ class PhoneBot:
 
         return f"Note deleted from {Fore.BLUE}{name}{Fore.RESET}."
 
-
     @input_error
     def __add_tag(self, args) -> str:
         if "|" not in args:
@@ -410,7 +405,7 @@ class PhoneBot:
         separator_index = parts.index("|")
 
         note_parts = parts[:separator_index]
-        tag_parts = parts[separator_index + 1:]
+        tag_parts = parts[separator_index + 1 :]
 
         if not note_parts or not tag_parts:
             return "Enter note text and tag."
@@ -424,7 +419,7 @@ class PhoneBot:
 
         if note is None:
             return "Note not found."
-       
+
         note.add_tag(tag_value)
 
         return f"Tag added to note for {Fore.BLUE}{name}{Fore.RESET}."
@@ -439,7 +434,7 @@ class PhoneBot:
         separator_index = parts.index("|")
 
         note_parts = parts[:separator_index]
-        tag_parts = parts[separator_index + 1:]
+        tag_parts = parts[separator_index + 1 :]
 
         if not note_parts or not tag_parts:
             return "Enter note text and tag."
@@ -476,10 +471,7 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']} "
-                f"[{item['tag']}]"
-            )
+            result.append(f"{item['name']}: {item['note']} " f"[{item['tag']}]")
 
         return "\n".join(result)
 
@@ -493,10 +485,7 @@ class PhoneBot:
         result = []
 
         for item in notes:
-            result.append(
-                f"{item['name']}: {item['note']}"
-                f"[{item['tag']}]"
-            )
+            result.append(f"{item['name']}: {item['note']}" f"[{item['tag']}]")
 
         return "\n".join(result)
 
@@ -554,22 +543,17 @@ class PhoneBot:
             if (
                 input(
                     f"{Fore.GREEN}{name}{Fore.RESET} has address record. Change it? y/n "
-                ).strip().lower()
+                )
+                .strip()
+                .lower()
                 == "y"
             ):
                 record.change_address(address)
                 print("Address was successfully updated")
             else:
                 return "Address was not updated"
-            
-        
+
         return self.__form_table([record])
-    
-
-
-
-        
-
 
     @input_error
     def __show_address(self, args) -> str:
@@ -607,18 +591,26 @@ class PhoneBot:
     def __show_all_addresses(self, _) -> str:
         # shows only records with addresses
         addresses = [
-                [str(record.name), str(record.address)]
-                for record in self.book.values()
-                if record.address]
+            [colorize(str(record.name), Color.BLUE), colorize(str(record.address))]
+            for record in self.book.values()
+            if record.address
+        ]
 
         if not addresses:
             return "No addresses found"
 
         return tabulate(
             addresses,
-            headers=["Name", "Address"],
-            tablefmt="fancy_grid"
-            )
+            headers=[
+                colorize(header, Color.MAGENTA) for header in ["№", "Name", "Address"]
+            ],
+            tablefmt="fancy_grid",
+            showindex=[
+                colorize(str(i), Color.MAGENTA) for i in range(1, len(addresses) + 1)
+            ],
+            maxcolwidths=35,
+            disable_numparse=True,
+        )
 
     @input_error
     def __show_commands(self, _) -> None:
